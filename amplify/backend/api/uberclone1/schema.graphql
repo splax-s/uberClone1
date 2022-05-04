@@ -1,0 +1,74 @@
+# This "input" configures a global authorization rule to enable public access to
+# all models in this schema. Learn more about authorization rules here: https://docs.amplify.aws/cli/graphql/authorization-rules
+# input AMPLIFY { globalAuthRule: AuthRule = { allow: public } } # FOR TESTING ONLY!
+
+
+
+type User @model @auth(
+rules: [
+{ allow: owner }
+{ allow: public, operations: [create, read, update] }
+{ allow: private, operations: [create, read, update] }
+]
+) {
+  id: ID!
+  username: String!
+  email: String!
+  orders: [Order] @connection(keyName: "byUser", fields: ["id"])
+  car: Car @connection(fields: ["id"])
+
+}
+
+type Car @model @auth(
+rules: [
+{ allow: owner }
+{ allow: public, operations: [create, read, update] }
+{ allow: private, operations: [create, read, update] }
+]
+)  @key(name: "byUser", fields: ["userId"]) {
+  id: ID!
+  type: String!
+  latitude: Float,
+  longitude: Float,
+  heading: Float,
+
+  isActive: Boolean
+
+  orders: [Order] @connection(keyName: "byCar", fields: ["id"])
+
+  userId: ID!
+  user: User @connection(fields: ["userId"])
+}
+
+type Order @model @auth(
+rules: [
+{ allow: owner }
+{ allow: public, operations: [create, read, update] }
+{ allow: private, operations: [create, read, update] }
+]
+) 
+  @key(name: "byUser", fields: ["userId"])
+  @key(name: "byCar", fields: ["carId", "createdAt"]) {
+  id: ID!
+  createdAt: String!
+
+  type: String!
+  status: String,
+
+  originLatitude: Float!
+  oreiginLongitude: Float!
+
+  destLatitude: Float!
+  destLongitude: Float!
+
+  userId: ID!
+  user: User @connection(fields: ["userId"])
+
+  carId: ID!
+  car: Car @connection(fields: ["carId"])
+}
+
+type Subscription {
+  onOrderUpdated(id: ID!): Order @aws_subscribe(mutations: ["updateOrder"])
+  onCarUpdated(id: ID!): Car @aws_subscribe(mutations: ["updateCar"])
+}
